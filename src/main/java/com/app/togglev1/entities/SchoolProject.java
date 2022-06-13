@@ -18,11 +18,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.Data;
@@ -53,29 +50,11 @@ public class SchoolProject implements Serializable{
 	@ManyToOne()
 	@JoinColumn(name = "schoolTeacherCreator_id", referencedColumnName = "id", nullable = false)
 	private SchoolTeacher schoolTeacherCreator;
-/*
-	@JsonBackReference(value="proyect-collaborator")
-	@ManyToMany()
-	@JoinTable(name = "school_project_collaborator_collaborator", joinColumns = @JoinColumn(name="school_project_id"),
-	inverseJoinColumns = @JoinColumn(name="school_teacher_id"))
-	private Set <SchoolTeacher> schoolTeachers = new HashSet<>(); 
-	*/
-	/*
-	 
-	@JsonBackReference
-	@ManyToMany(mappedBy = "schoolProjects")
-	private Set <SchoolTeacher> schoolTeachers = new HashSet<>(); 
 	
-	@Fetch(value = FetchMode.SELECT)
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "forumAnswerId")
-    @JsonManagedReference
-    private Set <SchoolTeacher> schoolTeachers = new HashSet<>(); 
-	*/
 	@JsonBackReference
 	@OneToMany(
-	        cascade = CascadeType.ALL,
-	        orphanRemoval = true
+			fetch=FetchType.LAZY,
+	        cascade = CascadeType.ALL
 	    )
 	 @JoinTable (
 		        name="school_project_collaborators",

@@ -17,22 +17,33 @@ public class SchoolProjectService {
 
 	@Autowired
 	SchoolProjectRepository projectRepository;
-	
+
 	public void save(SchoolProject schoolProject) {
 		projectRepository.save(schoolProject);
 	}
-	public Optional<SchoolProject> getOne(long id)  {
+
+	public Optional<SchoolProject> getOne(long id) {
 		return projectRepository.findById(id);
 	}
-	public Optional<SchoolProject> getByTitle(String title)  {
+
+	public Optional<SchoolProject> getByTitle(String title) {
 		return projectRepository.findByTitle(title);
 	}
-	public List<SchoolProject> getAll(){
+
+	public List<SchoolProject> getAll() {
 		return projectRepository.findAll();
 	}
-	
+
+	public List<SchoolProject> getCollaborativeProject(long idTeacher) {
+		return projectRepository.getCollaborativeProjects(idTeacher);
+	}
+
+	public List<SchoolProject> getAllDifferent(long id) {
+		return projectRepository.getAllDifferent(id);
+	}
+
 	public void delete(SchoolProject schoolProject) {
 		projectRepository.delete(schoolProject);
 	}
-	
+
 }

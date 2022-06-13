@@ -19,6 +19,7 @@ public class CollaborationRequestDTO implements Serializable{
 	private long id;
 	private long idProject;
 	private long idTeacher;
+	private String titleProject;
 	private String nameTeacher;
 	private String nameSchool;
 	private String citySchool;

@@ -12,12 +12,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.togglev1.dtos.CollaborationRequestDTO;
+import com.app.togglev1.dtos.CollaboratorProjectDTO;
+import com.app.togglev1.dtos.CreatorProjectDTO;
+import com.app.togglev1.dtos.SchoolProjectCardDTO;
 import com.app.togglev1.dtos.SchoolProjectDTO;
-import com.app.togglev1.dtos.SchoolTeacherDTO;
 import com.app.togglev1.entities.CollaborationRequest;
 import com.app.togglev1.entities.SchoolProfile;
 import com.app.togglev1.entities.SchoolProject;
@@ -29,6 +32,7 @@ import com.app.togglev1.services.SchoolProfileService;
 import com.app.togglev1.services.SchoolProjectService;
 import com.app.togglev1.services.SchoolTeacherService;
 import com.app.togglev1.services.StudiesService;
+import com.app.togglev1.utils.ServiceMethods;
 
 @RestController
 @RequestMapping("/project")
@@ -98,20 +102,103 @@ public class SchoolProjectController {
 	}
 
 	@GetMapping("/getAll")
-	public ResponseEntity<List<SchoolProjectDTO>> getAll() {
-		List<SchoolProject> schoolProjects = schoolProjectService.getAll();
-		List<SchoolProjectDTO> schoolProjectDTO = new ArrayList<>();
-		for(SchoolProject sp : schoolProjects) {
-			SchoolProjectDTO projectDTO = new SchoolProjectDTO();
-			projectDTO.setCurrentCreate(sp.getCurrentCreate());
-			projectDTO.setTitle(sp.getTitle());
-			projectDTO.setDescription(sp.getDescription());
-			SchoolTeacherDTO schoolTeacherDTO = new SchoolTeacherDTO();
+	public ResponseEntity<List<SchoolProjectCardDTO>> getAll() {
+
+		List<SchoolProjectCardDTO> schoolProjectsCardDTO = new ArrayList<>();
+		List<SchoolProject> schoolProject = schoolProjectService.getAll();
+		for (SchoolProject sp : schoolProject) {
+			SchoolProjectCardDTO projectCardDTO = new SchoolProjectCardDTO();
+			projectCardDTO.setId(sp.getId());
+			projectCardDTO.setCurrentCreate(sp.getCurrentCreate());
+			projectCardDTO.setTitle(sp.getTitle());
+			projectCardDTO.setDescription(sp.getDescription());
+			CreatorProjectDTO creatorProjectDTO = new CreatorProjectDTO();
 			SchoolTeacher schoolTeacher = sp.getSchoolTeacherCreator();
-			schoolTeacherDTO.setName(schoolTeacher.getUserNested().getName());
-			projectDTO.setSchoolTeacherDTO(schoolTeacherDTO);
-			schoolProjectDTO.add(projectDTO);
+			creatorProjectDTO.setNameCreator(schoolTeacher.getUserNested().getName());
+			creatorProjectDTO.setNameSchoolCreator(schoolTeacher.getSchoolProfile().getName());
+			projectCardDTO.setCreatorProjectDTO(creatorProjectDTO);
+			Set<String> nameCycles = ServiceMethods.extractCyclesNames(sp.getListStudiesCycle());
+			if (!nameCycles.isEmpty()) {
+				projectCardDTO.setNameCycles(nameCycles);
+			}
+			schoolProjectsCardDTO.add(projectCardDTO);
 		}
-		return new ResponseEntity<List<SchoolProjectDTO>>(schoolProjectDTO, HttpStatus.OK);
+		return new ResponseEntity<List<SchoolProjectCardDTO>>(schoolProjectsCardDTO, HttpStatus.OK);
 	}
+
+	@GetMapping("/getAllBySeeker/{username}")
+	public ResponseEntity<List<SchoolProjectCardDTO>> getAllToTeacher(@PathVariable("username") String username) {
+		List<SchoolProjectCardDTO> schoolProjectsCardDTO = new ArrayList<>();
+		SchoolTeacher schoolTeacherSeeker = schoolTeacherService.getByUserName(username).get();
+		List<SchoolProject> schoolProjects = schoolProjectService.getAllDifferent(schoolTeacherSeeker.getId());
+		Set<SchoolProject> filterSchoolProject = ServiceMethods.filterCollaborationRequestByTeacher(schoolProjects,
+				schoolTeacherSeeker);
+		if (!filterSchoolProject.isEmpty()) {
+			for (SchoolProject sp : filterSchoolProject) {
+				Set<CollaboratorProjectDTO> cPDTOs = ServiceMethods.extractCollaborators(sp);
+				if (!ServiceMethods.checkIfExistsCollaborator(cPDTOs, schoolTeacherSeeker)) {
+					SchoolProjectCardDTO projectCardDTO = new SchoolProjectCardDTO();
+					projectCardDTO.setId(sp.getId());
+					projectCardDTO.setCurrentCreate(sp.getCurrentCreate());
+					projectCardDTO.setTitle(sp.getTitle());
+					projectCardDTO.setDescription(sp.getDescription());
+					CreatorProjectDTO creatorProjectDTO = new CreatorProjectDTO();
+					SchoolTeacher schoolTeacher = sp.getSchoolTeacherCreator();
+					creatorProjectDTO.setNameCreator(schoolTeacher.getUserNested().getUsername());
+					creatorProjectDTO.setNameSchoolCreator(schoolTeacher.getSchoolProfile().getName());
+					creatorProjectDTO.setCity(schoolTeacher.getSchoolProfile().getCity());
+					projectCardDTO.setCreatorProjectDTO(creatorProjectDTO);
+					Set<String> nameCycles = ServiceMethods.extractCyclesNames(sp.getListStudiesCycle());
+					if (!nameCycles.isEmpty()) {
+						projectCardDTO.setNameCycles(nameCycles);
+					}
+					Set<CollaboratorProjectDTO> collaboratorProjectDTOs = ServiceMethods.extractCollaborators(sp);
+					if (!collaboratorProjectDTOs.isEmpty()) {
+						projectCardDTO.setCollaboratorProjectDTOs(collaboratorProjectDTOs);
+					}
+					schoolProjectsCardDTO.add(projectCardDTO);
+				}
+
+			}
+		}
+
+		return new ResponseEntity<List<SchoolProjectCardDTO>>(schoolProjectsCardDTO, HttpStatus.OK);
+	}
+
+	@GetMapping("/getMyCollaborativeProject/{id}")
+	public ResponseEntity<List<SchoolProjectCardDTO>> getMyCollaborativeProject(@PathVariable("id") long id) {
+		List<SchoolProjectCardDTO> schoolProjectsCardDTO = new ArrayList<>();
+		List<SchoolProject> schoolProjects = schoolProjectService.getAllDifferent(id);
+		List<SchoolProject> schoolProjectsVero = schoolProjectService.getAllDifferent(id);
+		SchoolTeacher schoolTeacher = schoolTeacherService.getOne(id).get();
+		for (SchoolProject sp : schoolProjects) {
+			Set<CollaboratorProjectDTO> collaboratorProjectDTOs = ServiceMethods.extractCollaborators(sp);
+			for (CollaboratorProjectDTO dto : collaboratorProjectDTOs) {
+				if (dto.getNameCollaborator().equals(schoolTeacher.getUserNested().getUsername())) {
+					if (!schoolProjectsVero.contains(sp)) {
+						schoolProjectsVero.add(sp);
+					}
+				}
+			}
+		}
+		for (SchoolProject sp : schoolProjectsVero) {
+			SchoolProjectCardDTO projectCardDTO = new SchoolProjectCardDTO();
+			projectCardDTO.setId(sp.getId());
+			projectCardDTO.setCurrentCreate(sp.getCurrentCreate());
+			projectCardDTO.setTitle(sp.getTitle());
+			CreatorProjectDTO creatorProjectDTO = new CreatorProjectDTO();
+			SchoolTeacher schoolTeacher2 = sp.getSchoolTeacherCreator();
+			creatorProjectDTO.setNameCreator(schoolTeacher2.getUserNested().getUsername());
+			creatorProjectDTO.setNameSchoolCreator(schoolTeacher2.getSchoolProfile().getName());
+			creatorProjectDTO.setCity(schoolTeacher2.getSchoolProfile().getCity());
+			projectCardDTO.setCreatorProjectDTO(creatorProjectDTO);
+			Set<String> nameCycles = ServiceMethods.extractCyclesNames(sp.getListStudiesCycle());
+			if (!nameCycles.isEmpty()) {
+				projectCardDTO.setNameCycles(nameCycles);
+			}
+			schoolProjectsCardDTO.add(projectCardDTO);
+		}
+		return new ResponseEntity<List<SchoolProjectCardDTO>>(schoolProjectsCardDTO, HttpStatus.OK);
+	}
+
 }

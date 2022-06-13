@@ -21,8 +21,6 @@ import org.hibernate.annotations.Cascade;
 
 import com.app.togglev1.security.entities.UserNested;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.Getter;
@@ -61,27 +59,6 @@ public class SchoolTeacher implements Serializable{
 	@JoinTable(name = "studies_cycle_teacher_profile", joinColumns = @JoinColumn(name="teacher_id"),
 	inverseJoinColumns = @JoinColumn(name="teacher_cycle_id"))
 	private Set <StudiesCycle> listStudiesCycle = new HashSet<>(); 
-	/*
-	@JsonManagedReference(value="proyect-collaborator")
-	@ManyToMany(mappedBy="schoolTeachers")
-	private Set <SchoolProject> schoolProjects = new HashSet<>(); 
-	*/
-	//@JsonManagedReference(value="proyect-collaborator")
-	
-	/*
-	@JsonManagedReference
-	@ManyToMany()
-	@JoinTable(name = "school_project_collaborator_teacher", joinColumns = @JoinColumn(name="school_project_id"),
-			inverseJoinColumns = @JoinColumn(name="school_teacher_id"))
-	private Set <SchoolProject> schoolProjects = new HashSet<>(); 
-	*/
-	
-	/*
-	@ManyToOne(fetch=FetchType.EAGER)
-	@JoinColumn(name="schoolProjectsId")
-	@JsonBackReference
-	private SchoolProject schoolProjects;
-	*/
 	
 	@JsonManagedReference(value="user-nested")
 	@OneToOne(fetch = FetchType.EAGER, optional = false)

@@ -5,12 +5,14 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.naming.AuthenticationException;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,7 +45,7 @@ import com.app.togglev1.services.StudiesService;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:4200") 
+@CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
 	@Autowired
@@ -62,19 +64,14 @@ public class AuthController {
 	StudiesService studiesService;
 
 	@PostMapping("/create-acount-teacher")
-	public ResponseEntity<?> nuevoProfesor(@Valid @RequestBody NewUser newUser, BindingResult bindingResult){
-		//preguntitas
+	public ResponseEntity<?> nuevoProfesor(@Valid @RequestBody NewUser newUser, BindingResult bindingResult) {
+
 		UserNested basicUser = new UserNested(newUser.getName(), newUser.getUsername(), newUser.getEmail(),
 				passwordEncoder.encode(newUser.getPassword()));
-		//SchoolTeacher schoolTeacher = new SchoolTeacher();
 		SchoolProfile schoolProfile = schoolProfileService.getOne(newUser.getIdSchoolProfile()).get();
-		//schoolTeacher.setUserNested(basicUser);
 		Set<Rol> roles = new HashSet<>();
 		roles.add(rolService.getByRolName(RolName.ROLE_TEACHER_CENTER).get());
-		//schoolTeacher.setSchoolProfile(schoolProfile);
 		basicUser.setRoles(roles);
-		//basicUser.setSchoolTeacher(schoolTeacher);
-		//schoolProfile.getSchoolTeachers().add(schoolTeacher);
 		SchoolTeacher st = new SchoolTeacher();
 		st.setUserNested(basicUser);
 		Set<SchoolTeacher> schoolTeachers = schoolProfile.getSchoolTeachers();
@@ -83,19 +80,17 @@ public class AuthController {
 		st.setSchoolProfile(schoolProfile);
 		basicUser.setSchoolTeacher(st);
 		basicUserService.save(basicUser);
-		//schoolProfile.getSchoolTeachers().add(schoolTeacher);
-		//schoolProfileService.save(schoolProfile);
 		return new ResponseEntity<Mensaje>(new Mensaje("usuario guardado"), HttpStatus.CREATED);
 	}
-	
+
 	@PostMapping("/create-account")
-	public ResponseEntity<?> nuevo(@Valid @RequestBody NewUser newUser, BindingResult bindingResult) {
-		if (bindingResult.hasErrors())
-			return new ResponseEntity<Mensaje>(new Mensaje("Campos error."), HttpStatus.BAD_REQUEST);
-		if (basicUserService.existsByUserName(newUser.getUsername()))
+	public ResponseEntity<?> nuevo(@Valid @RequestBody NewUser newUser) {
+		if (basicUserService.existsByUserName(newUser.getUsername())) {
 			return new ResponseEntity<Mensaje>(new Mensaje("El nombre ya existe"), HttpStatus.BAD_REQUEST);
-		if (basicUserService.existsByEmail(newUser.getEmail()))
+		}
+		if (basicUserService.existsByEmail(newUser.getEmail())) {
 			return new ResponseEntity<Mensaje>(new Mensaje("El mail ya existe"), HttpStatus.BAD_REQUEST);
+		}
 
 		if (schoolProfileService.existsByName(newUser.getSchoolProfile().getName())) {
 			return new ResponseEntity<Mensaje>(new Mensaje("El nombre de centro ya existe"), HttpStatus.BAD_REQUEST);
@@ -122,24 +117,27 @@ public class AuthController {
 			roles.add(rolService.getByRolName(RolName.ROLE_ADMIN).get());
 		basicUser.setRoles(roles);
 		basicUserService.save(basicUser);
-		return new ResponseEntity<Mensaje>(new Mensaje("usuario guardado"), HttpStatus.CREATED);
+		return new ResponseEntity<Mensaje>(new Mensaje("Usuario guardado"), HttpStatus.CREATED);
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@Valid @RequestBody LoginUser loginUser, BindingResult bindingResult) {
-		if (bindingResult.hasErrors())
-			return new ResponseEntity<Mensaje>(new Mensaje("campos mal puestos"), HttpStatus.BAD_REQUEST);
-		if (!basicUserService.existsByUserName(loginUser.getUsername()))
-			return new ResponseEntity<Mensaje>(new Mensaje("El nombre no existe"), HttpStatus.BAD_REQUEST);
-		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginUser.getUsername(), loginUser.getPassword()));
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-		String jwt = jwtProvider.generateToken(authentication);
-		JwtDTO jwtDTO = new JwtDTO(jwt);
-		BasicUser basicUser = basicUserService.getByUserName(loginUser.getUsername()).get();
-		basicUser.setLastAccess(new Date());
-		basicUserService.save(basicUser);
-		return new ResponseEntity<JwtDTO>(jwtDTO, HttpStatus.OK);
+	public ResponseEntity<?> login(@Valid @RequestBody LoginUser loginUser){
+		if (!basicUserService.existsByUserName(loginUser.getUsername())) {
+			return new ResponseEntity<Mensaje>(new Mensaje("El nombre de usuario no existe."), HttpStatus.BAD_REQUEST);
+		}else {
+			try {
+				Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginUser.getUsername(), loginUser.getPassword()));
+				String jwt = jwtProvider.generateToken(authentication);
+				JwtDTO jwtDTO = new JwtDTO(jwt);
+				BasicUser basicUser = basicUserService.getByUserName(loginUser.getUsername()).get();
+				basicUser.setLastAccess(new Date());
+				basicUserService.save(basicUser);
+				return new ResponseEntity<JwtDTO>(jwtDTO, HttpStatus.OK);
+			} catch(Exception  ex) {
+				return new ResponseEntity<Mensaje>(new Mensaje("La contraseña no es correcta."), HttpStatus.BAD_REQUEST);
+			}
+		}
+
 	}
 
 	@PostMapping("/refresh")
@@ -148,6 +146,5 @@ public class AuthController {
 		JwtDTO newJwtDTO = new JwtDTO(token);
 		return new ResponseEntity<>(newJwtDTO, HttpStatus.OK);
 	}
-	
-	
+
 }

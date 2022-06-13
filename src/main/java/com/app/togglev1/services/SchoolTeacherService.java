@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import com.app.togglev1.entities.SchoolProfile;
 import com.app.togglev1.entities.SchoolTeacher;
 import com.app.togglev1.repositories.SchoolTeacherRepository;
-import com.app.togglev1.security.entities.BasicUser;
-import com.app.togglev1.security.entities.UserNested;
 
 @Service
 @Transactional
@@ -40,6 +38,10 @@ public class SchoolTeacherService {
 	
 	public void save(SchoolTeacher schoolTeacher) {
 		schoolTeacherRepository.save(schoolTeacher);
+	}
+	
+	public Optional<SchoolTeacher> getByUserName(String username) {
+		return schoolTeacherRepository.findByUserNestedUsername(username);
 	}
 
 }

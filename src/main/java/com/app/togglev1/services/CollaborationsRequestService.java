@@ -1,6 +1,5 @@
 package com.app.togglev1.services;
 
-import java.util.Optional;
 import java.util.Set;
 
 import javax.transaction.Transactional;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.app.togglev1.entities.CollaborationRequest;
 import com.app.togglev1.entities.SchoolProject;
+import com.app.togglev1.entities.SchoolTeacher;
 import com.app.togglev1.repositories.CollaborationRequestRepository;
 
 @Service
@@ -23,12 +23,21 @@ public class CollaborationsRequestService {
 		collaborationRequestRepository.save(collaborationRequest);
 	}
 	
+	public boolean existsById(long id) {
+		return collaborationRequestRepository.existsById(id);
+	}
+	
 	public void delete(CollaborationRequest collaborationRequest) {
 		collaborationRequestRepository.delete(collaborationRequest);
 	}
 	
 	public Set<CollaborationRequest> getAllBySchoolProyect(SchoolProject schoolProject) {
 		Set<CollaborationRequest> collaborationRequests = collaborationRequestRepository.findAllBySchoolProject(schoolProject);
+		return collaborationRequests;
+	}
+	
+	public Set<CollaborationRequest> getAllBySchoolTeacher(SchoolTeacher schoolTeacher) {
+		Set<CollaborationRequest> collaborationRequests = collaborationRequestRepository.findAllBySchoolTeacherRequest(schoolTeacher);
 		return collaborationRequests;
 	}
 	
