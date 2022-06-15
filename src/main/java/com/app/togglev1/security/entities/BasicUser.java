@@ -46,14 +46,15 @@ public abstract class BasicUser implements Serializable{
 	private Long id;
 	
 	@NonNull
+	@Column(length = 100)
 	private String name;
 	
 	@NonNull
-	@Column(unique=true)
+	@Column(unique=true, length = 50)
 	private String username;
 	
 	@NonNull
-	@Column(unique=true)
+	@Column(unique=true, length = 62)
 	private String email;
 	
 	@NonNull

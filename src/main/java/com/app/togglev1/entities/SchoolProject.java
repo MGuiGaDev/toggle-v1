@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -41,9 +42,11 @@ public class SchoolProject implements Serializable{
 	private long id;
 	
 	@NonNull
+	@Column(columnDefinition = "varchar(50)")
 	private String title;
 	
 	@NonNull
+	@Column(columnDefinition = "varchar(280)")
 	private String description;
 	
 	@JsonBackReference(value="proyect-creator")
@@ -52,14 +55,14 @@ public class SchoolProject implements Serializable{
 	private SchoolTeacher schoolTeacherCreator;
 	
 	@JsonBackReference
-	@OneToMany(
-			fetch=FetchType.LAZY,
+	@ManyToMany(
+			fetch=FetchType.EAGER,
 	        cascade = CascadeType.ALL
 	    )
 	 @JoinTable (
 		        name="school_project_collaborators",
 		        joinColumns={ @JoinColumn(name="school_project_id") },
-		        inverseJoinColumns={ @JoinColumn(name="school_teacher_id", unique=true) }
+		        inverseJoinColumns={ @JoinColumn(name="school_teacher_id") }
 		    )
 	private Set<SchoolTeacher> collaborators = new HashSet<>();
 	

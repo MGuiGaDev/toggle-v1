@@ -40,7 +40,7 @@ import com.app.togglev1.services.StudiesService;
 
 @RestController
 @RequestMapping("/teacher")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin
 public class SchoolTeacherController {
 
 	@Autowired
@@ -84,11 +84,19 @@ public class SchoolTeacherController {
 	}
 
 	@PutMapping("/updateTeacher/{id}")
-	public ResponseEntity<Mensaje> updateCycle(@PathVariable("id") long id, @RequestBody SchoolTeacherDTO newUser) {
+	public ResponseEntity<Mensaje> updateTeacher(@PathVariable("id") long id, @RequestBody SchoolTeacherDTO newUser) {
 		SchoolTeacher schoolTeacher = schoolTeacherService.getOne(newUser.getId()).get();
 		BasicUser basicUser = basicUserService.getByUserName(schoolTeacher.getUserNested().getUsername()).get();
 		basicUser.setEmail(newUser.getEmail());
 		basicUser.setName(newUser.getName());
+		basicUserService.save(basicUser); 
+		return new ResponseEntity<Mensaje>(new Mensaje("Perfil actualizado"), HttpStatus.OK);
+	}
+	
+	@PutMapping("/updateTeacherPassword/{id}")
+	public ResponseEntity<Mensaje> updatePasswordTeacher(@PathVariable("id") long id, @RequestBody SchoolTeacherDTO newUser) {
+		SchoolTeacher schoolTeacher = schoolTeacherService.getOne(newUser.getId()).get();
+		BasicUser basicUser = basicUserService.getByUserName(schoolTeacher.getUserNested().getUsername()).get();
 		basicUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
 		basicUserService.save(basicUser);
 		return new ResponseEntity<Mensaje>(new Mensaje("Perfil actualizado"), HttpStatus.OK);
@@ -244,11 +252,26 @@ public class SchoolTeacherController {
 		collaborationsRequestService.save(collaborationRequest);
 	}
 
-	@GetMapping("/getMyCollaboratorRequest/{id}")
+	@GetMapping("/getAllMyCollaboratorRequest/{id}")
 	public ResponseEntity<Set<CollaborationRequestDTO>> getMyCollaboratorRequest(@PathVariable("id") long id) {
 		SchoolTeacher schoolTeacher = schoolTeacherService.getOne(id).get();
 		Set<CollaborationRequest> collaborationRequest = collaborationsRequestService
 				.getAllBySchoolTeacher(schoolTeacher);
+		Set<CollaborationRequestDTO> collaborationRequestDTOs = new HashSet<>();
+		for (CollaborationRequest request : collaborationRequest) {
+			CollaborationRequestDTO dto = new CollaborationRequestDTO();
+			dto.setTitleProject(request.getSchoolProject().getTitle());
+			dto.setCollaborationResponse(request.getCollaborationResponse());
+			dto.setNameSchool(request.getSchoolProject().getSchoolTeacherCreator().getSchoolProfile().getName());
+			dto.setSend(request.getSended());
+			collaborationRequestDTOs.add(dto);
+		}
+		return new ResponseEntity<Set<CollaborationRequestDTO>>(collaborationRequestDTOs, HttpStatus.OK);
+	}
+	
+	@GetMapping("/getMyCollaboratorRequestPendint/{id}")
+	public ResponseEntity<Set<CollaborationRequestDTO>> getMyCollaboratorRequestPendint(@PathVariable("id") long id) {
+		Set<CollaborationRequest> collaborationRequest = collaborationsRequestService.getMyCollaboratorRequestPendint(id);
 		Set<CollaborationRequestDTO> collaborationRequestDTOs = new HashSet<>();
 		for (CollaborationRequest request : collaborationRequest) {
 			CollaborationRequestDTO dto = new CollaborationRequestDTO();
@@ -276,6 +299,14 @@ public class SchoolTeacherController {
 			collaborationRequestDTOs.add(dto);
 		}
 		return new ResponseEntity<Set<CollaborationRequestDTO>>(collaborationRequestDTOs, HttpStatus.OK);
+	}
+	
+	@GetMapping("/getProjectsNoCollaboratorRequest/{id}")
+	public ResponseEntity<Set<SchoolProject>> getProjectsNoCollaborator(@PathVariable("id") long id) {
+		SchoolTeacher teacher = schoolTeacherService.getOne(id).get();
+		Set<SchoolProject> projects = collaborationsRequestService.getProjectsNoCollaboratorRequest(teacher); 
+		System.out.println(projects.toString());
+		return new ResponseEntity<Set<SchoolProject>>(projects, HttpStatus.OK);
 	}
 
 	@DeleteMapping("/deleteCollaborationRequest/{id}")

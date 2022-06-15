@@ -20,7 +20,7 @@ import com.app.togglev1.services.SchoolTeacherService;
 
 @RestController
 @RequestMapping("/basicuser")
-@CrossOrigin(origins = "http://localhost:4200") 
+@CrossOrigin
 public class BasicUserController {
 
 	@Autowired

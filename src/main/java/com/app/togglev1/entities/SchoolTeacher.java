@@ -20,6 +20,7 @@ import javax.persistence.OneToOne;
 import org.hibernate.annotations.Cascade;
 
 import com.app.togglev1.security.entities.UserNested;
+import com.app.togglev1.services.SchoolProjectService;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -70,5 +71,8 @@ public class SchoolTeacher implements Serializable{
 	@Cascade(org.hibernate.annotations.CascadeType.DELETE)
 	@OneToMany(fetch=FetchType.LAZY, mappedBy = "schoolTeacherRequest")
 	private Set<CollaborationRequest> collaborationRequests  = new HashSet<>();
+	
+	@ManyToMany(mappedBy = "collaborators")
+    private Set<SchoolProject> schoolProjects;
 	
 }

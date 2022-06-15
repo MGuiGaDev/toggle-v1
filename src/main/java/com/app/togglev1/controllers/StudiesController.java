@@ -18,7 +18,7 @@ import com.app.togglev1.services.StudiesService;
 
 @RestController
 @RequestMapping("/studies")
-@CrossOrigin(origins = "http://localhost:4200" )
+@CrossOrigin
 public class StudiesController {
 
 	@Autowired

@@ -38,17 +38,19 @@ public class SchoolProfile implements Serializable{
 	private long id;
 	
 	@NonNull
-	@Column(name="schoolName", unique=true)
+	@Column(name="schoolName", unique=true, length = 50)
 	private String name;
 	
 	@NonNull
-	@Column(name="schoolCode", unique=true)
+	@Column(name="schoolCode", unique=true, length = 8)
 	private Integer code;
 	
 	@NonNull
+	@Column(length = 50)
 	private String city;
 	
 	@NonNull
+	@Column(columnDefinition = "varchar(280)")
 	private String description;
 	
 	

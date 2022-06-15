@@ -36,9 +36,24 @@ public class CollaborationsRequestService {
 		return collaborationRequests;
 	}
 	
+	public Set<CollaborationRequest> getMyCollaboratorRequestPendint(long id){
+		Set<CollaborationRequest> collaborationRequests = collaborationRequestRepository.getMyCollaboratorRequestPendint(id);
+		return collaborationRequests;
+	}
+	
+	public Set<CollaborationRequest> getCollaboratorRequestPendintOfProject(long id){
+		Set<CollaborationRequest> collaborationRequests = collaborationRequestRepository.getCollaboratorRequestPendintOfProject(id);
+		return collaborationRequests;
+	}
+	
 	public Set<CollaborationRequest> getAllBySchoolTeacher(SchoolTeacher schoolTeacher) {
 		Set<CollaborationRequest> collaborationRequests = collaborationRequestRepository.findAllBySchoolTeacherRequest(schoolTeacher);
 		return collaborationRequests;
+	}
+	
+	public Set<SchoolProject> getProjectsNoCollaboratorRequest(SchoolTeacher schoolTeacher) {
+		Set<SchoolProject> schoolProjects = collaborationRequestRepository.getProjectsNoCollaboratorRequest(schoolTeacher.getId());
+		return schoolProjects;
 	}
 	
 	public CollaborationRequest findById(long id) {

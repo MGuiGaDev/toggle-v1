@@ -36,7 +36,7 @@ import com.app.togglev1.utils.ServiceMethods;
 
 @RestController
 @RequestMapping("/project")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin
 public class SchoolProjectController {
 
 	@Autowired
@@ -69,26 +69,26 @@ public class SchoolProjectController {
 	@GetMapping("/getOneId/{id}")
 	public ResponseEntity<SchoolProjectDTO> getProjectById(@PathVariable("id") long id) {
 		SchoolProject schoolProject = schoolProjectService.getOne(id).get();
-		Set<CollaborationRequest> collaborationRequests = collaborationsRequestService
-				.getAllBySchoolProyect(schoolProject);
 		Set<CollaborationRequestDTO> collaborationRequestDTOs = new HashSet<>();
-		for (CollaborationRequest collaboration : collaborationRequests) {
-			if (collaboration.getCollaborationResponse().equals(CollaborationResponse.PENDINT)) {
+		Set<CollaborationRequest> collaborationRequests = collaborationsRequestService
+				.getCollaboratorRequestPendintOfProject(schoolProject.getId());
+		if(!collaborationRequests.isEmpty()) {
+			for (CollaborationRequest collaboration : collaborationRequests) {
 				CollaborationRequestDTO c = new CollaborationRequestDTO();
 				c.setId(collaboration.getId());
 				c.setIdProject(collaboration.getSchoolProject().getId());
 				c.setIdTeacher(collaboration.getSchoolTeacherRequest().getId());
 				c.setNameTeacher(collaboration.getSchoolTeacherRequest().getUserNested().getName());
 				c.setSend(collaboration.getSended());
-				SchoolTeacher schoolTeacher = schoolTeacherService
-						.getOne(collaboration.getSchoolTeacherRequest().getId()).get();
-				SchoolProfile schoolProfile = schoolProfileService.getOne(schoolTeacher.getSchoolProfile().getId())
+				SchoolTeacher schoolTeacher = schoolTeacherService.getOne(collaboration.getSchoolTeacherRequest().getId())
 						.get();
+				SchoolProfile schoolProfile = schoolProfileService.getOne(schoolTeacher.getSchoolProfile().getId()).get();
 				c.setCitySchool(schoolProfile.getCity());
 				c.setNameSchool(schoolProfile.getName());
 				collaborationRequestDTOs.add(c);
 			}
 		}
+		
 		SchoolProjectDTO schoolProjectDTO = new SchoolProjectDTO();
 		schoolProjectDTO.setId(schoolProject.getId());
 		schoolProjectDTO.setIdCreator(schoolProject.getSchoolTeacherCreator().getId());
@@ -99,6 +99,33 @@ public class SchoolProjectController {
 		schoolProjectDTO.setCurrentCreate(schoolProject.getCurrentCreate());
 		schoolProjectDTO.setSchoolTeachers(schoolProject.getCollaborators());
 		return new ResponseEntity<SchoolProjectDTO>(schoolProjectDTO, HttpStatus.OK);
+	}
+	
+	@GetMapping("/getCollaboratorRequestPendintOfProject/{id}")
+	public ResponseEntity<Set<CollaborationRequestDTO>> getCollaboratorRequestPendintOfProject(@PathVariable("id") long id) {
+		SchoolProject schoolProject = schoolProjectService.getOne(id).get();
+		Set<CollaborationRequestDTO> collaborationRequestDTOs = new HashSet<>();
+		Set<CollaborationRequest> collaborationRequests = collaborationsRequestService
+				.getCollaboratorRequestPendintOfProject(schoolProject.getId());
+		System.out.println(collaborationRequests.toString());
+		if(!collaborationRequests.isEmpty()) {
+			for (CollaborationRequest collaboration : collaborationRequests) {
+				CollaborationRequestDTO c = new CollaborationRequestDTO();
+				c.setId(collaboration.getId());
+				c.setIdProject(collaboration.getSchoolProject().getId());
+				c.setIdTeacher(collaboration.getSchoolTeacherRequest().getId());
+				c.setNameTeacher(collaboration.getSchoolTeacherRequest().getUserNested().getName());
+				c.setSend(collaboration.getSended());
+				SchoolTeacher schoolTeacher = schoolTeacherService.getOne(collaboration.getSchoolTeacherRequest().getId())
+						.get();
+				SchoolProfile schoolProfile = schoolProfileService.getOne(schoolTeacher.getSchoolProfile().getId()).get();
+				c.setCitySchool(schoolProfile.getCity());
+				c.setNameSchool(schoolProfile.getName());
+				c.setCollaborationResponse(collaboration.getCollaborationResponse());
+				collaborationRequestDTOs.add(c);
+			}
+		}
+		return new ResponseEntity<Set<CollaborationRequestDTO>>(collaborationRequestDTOs, HttpStatus.OK);
 	}
 
 	@GetMapping("/getAll")
@@ -166,22 +193,11 @@ public class SchoolProjectController {
 	}
 
 	@GetMapping("/getMyCollaborativeProject/{id}")
-	public ResponseEntity<List<SchoolProjectCardDTO>> getMyCollaborativeProject(@PathVariable("id") long id) {
+	public ResponseEntity<List<SchoolProjectCardDTO>> getMyCollaborativeProject(@PathVariable("id") Long id) {
 		List<SchoolProjectCardDTO> schoolProjectsCardDTO = new ArrayList<>();
-		List<SchoolProject> schoolProjects = schoolProjectService.getAllDifferent(id);
-		List<SchoolProject> schoolProjectsVero = schoolProjectService.getAllDifferent(id);
 		SchoolTeacher schoolTeacher = schoolTeacherService.getOne(id).get();
+		Set<SchoolProject> schoolProjects = schoolProjectService.getCollaborativeProject(schoolTeacher);
 		for (SchoolProject sp : schoolProjects) {
-			Set<CollaboratorProjectDTO> collaboratorProjectDTOs = ServiceMethods.extractCollaborators(sp);
-			for (CollaboratorProjectDTO dto : collaboratorProjectDTOs) {
-				if (dto.getNameCollaborator().equals(schoolTeacher.getUserNested().getUsername())) {
-					if (!schoolProjectsVero.contains(sp)) {
-						schoolProjectsVero.add(sp);
-					}
-				}
-			}
-		}
-		for (SchoolProject sp : schoolProjectsVero) {
 			SchoolProjectCardDTO projectCardDTO = new SchoolProjectCardDTO();
 			projectCardDTO.setId(sp.getId());
 			projectCardDTO.setCurrentCreate(sp.getCurrentCreate());

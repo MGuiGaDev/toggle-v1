@@ -3,6 +3,7 @@ package com.app.togglev1.entities;
 import java.io.Serializable;
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -45,8 +46,10 @@ public class CollaborationRequest implements Serializable{
 	
 	private Date sended;
 	
+	@Column(columnDefinition = "varchar(280)")
 	private String message;
 	
+	@Column(columnDefinition = "varchar(7)")
 	@Enumerated(EnumType.STRING)
 	private CollaborationResponse collaborationResponse;
 	

@@ -17,5 +17,4 @@ public class ToggleV1Application extends SpringBootServletInitializer{
 	public static void main(String[] args) {
 		SpringApplication.run(ToggleV1Application.class, args);
 	}
-
 }

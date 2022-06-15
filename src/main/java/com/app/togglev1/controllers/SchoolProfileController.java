@@ -38,7 +38,7 @@ import com.app.togglev1.security.services.BasicUserService;
 
 @RestController
 @RequestMapping("/account")
-@CrossOrigin(origins = "http://localhost:4200" )
+@CrossOrigin
 public class SchoolProfileController {
 
 	@Autowired
